@@ -46,9 +46,9 @@ STATION_TO_CAR_REGION_MAP = {
     '제주특별자치도': '제주'
 }
 
-CSV_DIR_CARS = 'ev_cars.csv'
-CSV_DIR_STATIONS = 'EV_charging_station_info.csv'
-IMAGE_PATH = '../docs/img.png'
+CSV_DIR_CARS = './docs/ev_cars.csv'
+CSV_DIR_STATIONS = './docs/EV_charging_station_info.csv'
+IMAGE_PATH = './docs/img.png'
 
 # CSV_DIR_CARS = 'ev_cars.csv'
 ev_cars_df = pd.read_csv(CSV_DIR_CARS, encoding='utf-8')
