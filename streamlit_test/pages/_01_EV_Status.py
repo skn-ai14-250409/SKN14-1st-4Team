@@ -50,10 +50,6 @@ CSV_DIR_CARS = 'ev_cars.csv'
 CSV_DIR_STATIONS = 'EV_charging_station_info.csv'
 IMAGE_PATH = './img.png'
 
-# CSV_DIR_CARS = 'C:/Users/play data/Desktop/streamlit_test/ev_cars.csv'
-# CSV_DIR_STATIONS = 'C:/Users/play data/Desktop/streamlit_test/EV_charging_station_info.csv'
-# IMAGE_PATH = 'C:/Users/play data/Desktop/streamlit_test/img.png'
-
 # CSV_DIR_CARS = 'ev_cars.csv'
 ev_cars_df = pd.read_csv(CSV_DIR_CARS, encoding='utf-8')
 ev_cars_df['기준일'] = pd.to_datetime(ev_cars_df['기준일'])
@@ -73,7 +69,7 @@ st.set_page_config(page_title='전기차 현황',
                    page_icon='⚡',
                    layout='wide')
 
-st.markdown("<h1 style='text-align: center;'>전기차 등록 및 충전소 현황</h1>",
+st.markdown("<h1 style='text-align: center;'>🔌전기차 등록 및 충전소 현황🔌</h1>",
             unsafe_allow_html=True)
 st.markdown('  ')
 st.markdown('---')
@@ -144,74 +140,78 @@ col3, col4 = st.columns([1.2, 1])
 
 with col3:
     st.markdown("### 지역별 전기차 등록 수 지도")
-    m1 = folium.Map(location=[36.5, 127.8], zoom_start=7, tiles='cartodbpositron')
-    for idx, row in merged_2025.iterrows():
-        region = row['지역']
-        value = row['전기차 수']
-        if region in LOCATION_MAP:
-            radius = min(25, max(5, value / 5000))
-            color = 'red' if value > 80000 else 'orange' if value > 30000 else 'green'
-            folium.CircleMarker(
-                location=LOCATION_MAP[region],
-                radius=radius,
-                color=color,
-                fill=True,
-                fill_color=color,
-                fill_opacity=0.7,
-                popup=f"<b>{region}</b><br>전기차 수: {value:,}대",
-                tooltip=f"{region}: 전기차 {value:,}대"
-            ).add_to(m1)
-            folium.Marker(
-                location=LOCATION_MAP[region],
-                icon=folium.DivIcon(html=f"""<div style="font-size: 10pt; color: black; text-align:center;">{region}</div>""")
-            ).add_to(m1)
-    st_folium(m1, width=600, height=400)
+    fig_map1 = px.scatter_mapbox(
+        merged_2025.assign(
+            lat=[LOCATION_MAP[region][0] for region in merged_2025['지역']],
+            lon=[LOCATION_MAP[region][1] for region in merged_2025['지역']]
+        ),
+        lat='lat',
+        lon='lon',
+        size='전기차 수',
+        color='전기차 수',
+        color_continuous_scale='RdYlGn',  # Red → Yellow → Green
+        hover_data={
+            '지역': True,
+            '전기차 수': True,
+            'lat': False,
+            'lon': False
+        },
+        size_max=30,
+        zoom=6,
+        mapbox_style="open-street-map",
+    )
+    fig_map1.update_layout(height=400, margin={"r":0,"t":0,"l":0,"b":0})
+    st.plotly_chart(fig_map1, use_container_width=True)
+
 
 with col4:
-    st.markdown("### 지역별 전기차 수")
-    fig1 = px.bar(merged_2025.sort_values('전기차 수', ascending=False),
-                  x='지역', y='전기차 수', color='지역',
-                  color_discrete_map=COLOR_MAP, text_auto=True)
-    fig1.update_layout(height=400)
-    st.plotly_chart(fig1, use_container_width=True)
+    with st.container():
+        st.markdown("### 지역별 전기차 수")
+        fig1 = px.bar(merged_2025.sort_values('전기차 수', ascending=False),
+                      x='지역', y='전기차 수', color='지역',
+                      color_discrete_map=COLOR_MAP, text_auto=True)
+        fig1.update_layout(height=400)
+        st.plotly_chart(fig1, use_container_width=True)
 
 # ===== 지역별 충전소 등록 수 지도 + 그래프 =====
 col5, col6 = st.columns([1.2, 1])
 
 with col5:
     st.markdown("### 지역별 충전소 수 지도")
-    m2 = folium.Map(location=[36.5, 127.8], zoom_start=7, tiles='cartodbpositron')
-    for idx, row in merged_2025.iterrows():
-        region = row['지역']
-        value = row['충전소 수']
-        if region in LOCATION_MAP:
-            radius = min(25, max(5, value / 200))
-            color = 'blue' if value > 1500 else 'skyblue' if value > 500 else 'lightgreen'
-            folium.CircleMarker(
-                location=LOCATION_MAP[region],
-                radius=radius,
-                color=color,
-                fill=True,
-                fill_color=color,
-                fill_opacity=0.7,
-                popup=f"<b>{region}</b><br>충전소 수: {value:,}개",
-                tooltip=f"{region}: 충전소 {value:,}개"
-            ).add_to(m2)
-            folium.Marker(
-                location=LOCATION_MAP[region],
-                icon=folium.DivIcon(html=f"""<div style="font-size: 10pt; color: black; text-align:center;">{region}</div>""")
-            ).add_to(m2)
-    st_folium(m2, width=600, height=400)
+    fig_map2 = px.scatter_mapbox(
+        merged_2025.assign(
+            lat=[LOCATION_MAP[region][0] for region in merged_2025['지역']],
+            lon=[LOCATION_MAP[region][1] for region in merged_2025['지역']]
+        ),
+        lat='lat',
+        lon='lon',
+        size='충전소 수',
+        color='충전소 수',
+        color_continuous_scale='Cividis',  # 파란색 계열
+        hover_data={
+            '지역': True,
+            '충전소 수': True,
+            'lat': False,
+            'lon': False
+        },
+        size_max=30,
+        zoom=6,
+        mapbox_style="open-street-map",
+    )
+    fig_map2.update_layout(height=400, margin={"r":0,"t":0,"l":0,"b":0})
+    st.plotly_chart(fig_map2, use_container_width=True)
+
 
 with col6:
-    st.markdown("### 지역별 충전소 수")
-    fig2 = px.bar(merged_2025.sort_values('충전소 수', ascending=False),
-                  x='지역', y='충전소 수', color='지역',
-                  color_discrete_map=COLOR_MAP, text_auto=True)
-    fig2.update_layout(height=400)
-    st.plotly_chart(fig2, use_container_width=True)
+    with st.container():
+        st.markdown("### 지역별 충전소 수")
+        fig2 = px.bar(merged_2025.sort_values('충전소 수', ascending=False),
+                      x='지역', y='충전소 수', color='지역',
+                      color_discrete_map=COLOR_MAP, text_auto=True)
+        fig2.update_layout(height=400)
+        st.plotly_chart(fig2, use_container_width=True)
 
-st.markdown('---')
+    st.markdown('---')
 
 # ==============================================
 # 세번째 그래프_연도별 지역별 충전소 보급률 (연도 선택)
